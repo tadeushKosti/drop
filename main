@@ -1,0 +1,35 @@
+pragma solidity ^0.8.0;
+
+contract TokenAirdrop {
+   address private tokenAddress; 
+   address private owner;
+   uint256 private totalAirdropTokens;
+   uint256 private currentAirdropTokens;
+   uint256 private airdropEndTime;
+   bool private active;
+
+   mapping (address => bool) private recipients;
+
+   constructor (address _tokenAddress, uint256 _totalAirdropTokens, uint256 _airdropEndTime) {
+      tokenAddress = _tokenAddress;
+      owner = msg.sender;
+      totalAirdropTokens = _totalAirdropTokens;
+      airdropEndTime = _airdropEndTime;
+      active = true;
+   }
+
+   function setRecipient(address _recipient) public {
+      require(block.timestamp <= airdropEndTime, "Airdrop over");
+      require(active, "Airdrop inactive");
+      require(!recipients[_recipient], "Recipient already added");
+      recipients[_recipient] = true;
+      currentAirdropTokens += 1;
+      require(currentAirdropTokens <= totalAirdropTokens, "Insufficient tokens");
+      IERC20(tokenAddress).transfer(_recipient, 1 ether);
+   }
+
+   function deactivate() public {
+      require(msg.sender == owner, "Unauthorized");
+      active = false;
+   }
+}
